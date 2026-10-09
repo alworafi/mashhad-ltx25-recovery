@@ -89,16 +89,16 @@ def main() -> None:
         results = list(pool.map(download, FILES))
     total = time.monotonic() - started
     report = {
-        "engine": "direct",
+        "engine": "comfyui",
         "total_size": sum(int(metadata[name]) for name in FILES),
         "total_seconds": round(total, 2),
         "files": results,
     }
-    (BASE / "direct_download_report.json").write_text(
+    (BASE / "comfyui_download_report.json").write_text(
         json.dumps(report, indent=2), encoding="utf-8"
     )
     print(
-        f"ALL 5 DIRECT MODELS READY | {human_size(report['total_size'])} | {human_duration(total)}",
+        f"ALL 7 COMFYUI MODELS READY | {human_size(report['total_size'])} | {human_duration(total)}",
         flush=True,
     )
 
