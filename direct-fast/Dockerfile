@@ -7,7 +7,7 @@ ENV DEBIAN_FRONTEND=noninteractive \
     HF_HUB_DISABLE_XET=1 \
     HF_HUB_DOWNLOAD_TIMEOUT=120 \
     HF_HUB_ETAG_TIMEOUT=30 \
-    PATH=/opt/LTX-2/.venv/bin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+    PATH=/opt/LTX-2/.venv/bin:/opt/conda/bin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 
 RUN apt-get update \
  && apt-get install -y --no-install-recommends \
