@@ -20,19 +20,22 @@ printf '%s\n' "$LOG" > "$ROOT/logs/current_install_log"
 printf '%s\n' "$START_TS" > "$ROOT/logs/current_start_ts"
 rm -f "$ROOT/.MASHHAD_READY_V4" "$STATE_DIR/engines/comfyui.ready"
 
+hold_on_error() {
+  local status=$?
+  trap - ERR
+  echo "ERROR: ComfyUI bootstrap stopped with exit code $status after $(elapsed)." >&2
+  if [[ "${MASHHAD_HOLD_ON_ERROR:-1}" == "1" ]]; then
+    echo "Container kept alive for SSH diagnosis; inspect $LOG and $STATE_DIR/comfyui.log." >&2
+    exec sleep infinity
+  fi
+  exit "$status"
+}
+trap hold_on_error ERR
+
 echo "=== MASHHAD LTX-2.5 COMFYUI DOCKER ==="
 echo "Started: $(date -Is)"
 echo "Runtime: baked into ghcr.io/alworafi/ltx25-comfy-fast"
 echo "Models:  $MODEL_DIR"
-
-if [[ "${MASHHAD_PREPARE_ENGINES:-comfyui}" != "comfyui" ]]; then
-  echo "ERROR: this image supports ComfyUI only; select the ComfyUI template." >&2
-  exit 2
-fi
-if [[ -z "${HF_TOKEN:-}" ]]; then
-  echo "ERROR: HF_TOKEN is required to download LTX-2.5 models onto the Network Volume." >&2
-  exit 2
-fi
 
 ssh-keygen -A >/dev/null 2>&1
 if [[ -n "${PUBLIC_KEY:-}" ]]; then
@@ -41,6 +44,15 @@ if [[ -n "${PUBLIC_KEY:-}" ]]; then
   chmod 600 /root/.ssh/authorized_keys
 fi
 /usr/sbin/sshd
+
+if [[ "${MASHHAD_PREPARE_ENGINES:-comfyui}" != "comfyui" ]]; then
+  echo "ERROR: this image supports ComfyUI only; select the ComfyUI template." >&2
+  false
+fi
+if [[ -z "${HF_TOKEN:-}" ]]; then
+  echo "ERROR: HF_TOKEN is required to download LTX-2.5 models onto the Network Volume." >&2
+  false
+fi
 
 ln -sfn "$COMFY" "$ROOT/ComfyUI"
 printf '%s\n' comfyui > "$STATE_DIR/prepared_engines"
@@ -74,7 +86,7 @@ for _ in $(seq 1 120); do
   if ! kill -0 "$COMFY_PID" 2>/dev/null; then
     echo "ERROR: ComfyUI stopped before becoming ready." >&2
     tail -100 "$STATE_DIR/comfyui.log" >&2 || true
-    exit 1
+    false
   fi
   if curl -fsS --max-time 3 http://127.0.0.1:8188/system_stats >/dev/null; then
     date -u +%FT%TZ > "$STATE_DIR/engines/comfyui.ready"
@@ -89,4 +101,4 @@ done
 
 echo "ERROR: ComfyUI did not pass /system_stats within 120 seconds." >&2
 tail -100 "$STATE_DIR/comfyui.log" >&2 || true
-exit 1
+false
