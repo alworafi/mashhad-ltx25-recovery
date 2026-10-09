@@ -71,7 +71,7 @@ for relative in \
   vae/ltx-2.5-audio-vae-bf16.safetensors \
   latent_upscale_models/ltx-2.5-latent-spatial-upscaler-x2-bf16-1.0.safetensors \
   latent_upscale_models/ltx-2.5-latent-temporal-upscaler-x2-bf16-1.0.safetensors \
-  loras/ltx-2.5-22b-ic-lora-pixel-spatial-upscaler-x2-1.0.safetensors
+  loras/ltx-2.5-22b-distilled-lora-450-bf16.safetensors
 do
   mkdir -p "$COMFY/models/$(dirname "$relative")"
   ln -sfn "$MODEL_DIR/$relative" "$COMFY/models/$relative"
