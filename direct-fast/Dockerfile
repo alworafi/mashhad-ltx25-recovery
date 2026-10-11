@@ -20,9 +20,17 @@ RUN git clone --filter=blob:none https://github.com/Lightricks/LTX-2.git /opt/LT
  && git -C /opt/LTX-2 fetch --depth 1 origin "$LTX_REF" \
  && git -C /opt/LTX-2 checkout --detach "$LTX_REF"
 WORKDIR /opt/LTX-2
-RUN uv sync --no-dev --extra natten \
- && uv pip install --python /opt/LTX-2/.venv/bin/python \
-      "huggingface_hub>=0.34,<2" safetensors hf-xet
+RUN python -m venv --system-site-packages /opt/LTX-2/.venv \
+ && /opt/LTX-2/.venv/bin/python -m pip install --disable-pip-version-check --no-deps \
+      --index-url https://download.pytorch.org/whl/cu128 \
+      "torchvision==0.24.1+cu128" "torchaudio==2.9.1+cu128" \
+ && /opt/LTX-2/.venv/bin/python -m pip install --disable-pip-version-check \
+      -e /opt/LTX-2/packages/ltx-core \
+      -e /opt/LTX-2/packages/ltx-pipelines \
+      "huggingface_hub>=0.34,<2" safetensors hf-xet \
+ && /opt/LTX-2/.venv/bin/python -m pip install --disable-pip-version-check --no-deps \
+      "natten==0.21.5+torch290cu128" --find-links https://whl.natten.org \
+ && /opt/LTX-2/.venv/bin/python -c "import torch, torchvision, torchaudio; assert torch.__version__.startswith('2.9.1'); assert torchvision.__version__.startswith('0.24.1'); assert torchaudio.__version__.startswith('2.9.1'); assert (torch.version.cuda or '').startswith('12.8')"
 
 COPY boot.sh download.py models.py /opt/mashhad/
 RUN chmod +x /opt/mashhad/boot.sh

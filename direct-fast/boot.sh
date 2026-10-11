@@ -41,7 +41,13 @@ if [[ -n "${PUBLIC_KEY:-}" ]]; then
 fi
 /usr/sbin/sshd
 
-ln -sfn /opt/LTX-2 "$ROOT/LTX-2"
+if [[ -L "$ROOT/LTX-2" ]]; then
+  ln -sfn /opt/LTX-2 "$ROOT/LTX-2"
+elif [[ ! -e "$ROOT/LTX-2" ]]; then
+  ln -s /opt/LTX-2 "$ROOT/LTX-2"
+else
+  echo "[REUSE] Preserving the existing Volume checkout at $ROOT/LTX-2; the baked runtime remains at /opt/LTX-2."
+fi
 printf '%s\n' direct > "$STATE_DIR/prepared_engines"
 printf '%s\n' direct > "$STATE_DIR/default_engine"
 printf '%s\n' direct > "$STATE_DIR/active_engine"
@@ -58,7 +64,7 @@ print(f"Direct runtime ready: torch={torch.__version__} cuda={torch.version.cuda
 PY
 
 date -u +%FT%TZ > "$STATE_DIR/engines/direct.ready"
-printf '%s\n' MASHHAD_LTX25_DIRECT_DOCKER_V1 > "$ROOT/.MASHHAD_READY_V4"
+printf '%s\n' MASHHAD_LTX25_DIRECT_DOCKER_V2 > "$ROOT/.MASHHAD_READY_V4"
 echo "INSTALL VERIFIED in $(elapsed)"
 echo "Mashhad will now install and start its Worker automatically on port ${MASHHAD_WORKER_PORT:-8000}."
 
